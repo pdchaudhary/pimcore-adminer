@@ -28,7 +28,9 @@
         "nelmio/cors-bundle": "^2.4",
         "doctrine/annotations": "^2.0",
         "vrana/adminer": "^4.17",
-        "phpmyadmin/sql-parser": "^5.11"
+        "phpmyadmin/sql-parser": "^5.11",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*"
     },
     "require-dev": {
         "symplify/easy-coding-standard": "^9.4",

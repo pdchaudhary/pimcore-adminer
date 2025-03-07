@@ -1,50 +1,44 @@
 <?php
 
 namespace CORS\Bundle\AdminerBundle\Controller {
-
     use CORS\Bundle\AdminerBundle\lib\Pim\Helper;
-    use Pimcore\Logger;
-    use Pimcore\Tool\Admin;
-    use Pimcore\Tool\Session;
+    use Pimcore\Helper\Mail as MailHelper;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\HttpFoundation\Response;
-    use Symfony\Component\HttpKernel\Event\ControllerEvent;
-    use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
     use Symfony\Component\HttpKernel\Profiler\Profiler;
     use Symfony\Component\Routing\Annotation\Route;
-    use Pimcore\Helper\Mail as MailHelper;
 
     class DefaultController
     {
+        protected string $adminerHome = '';
 
         /**
-         * @var string
+         * @Route("/admin/CORSAdminerBundle/adminer", name="cors_adminer")
          */
-        protected $adminerHome = '';
-
-        /**
-         * @Route("/admin/CORSAdminerBundle/adminer", name="data_director_adminer")
-         *
-         * @return Response
-         *
-         */
-        public function adminerAction(?Profiler $profiler, Request $request): Response
+        public function adminerAction(?Profiler $profiler): Response
         {
-            $this->prepare($request);
+            $this->prepare();
 
-            if ($profiler) {
-                $profiler->disable();
-            }
-
-            set_error_handler(function () {});
+            $profiler?->disable();
 
             chdir($this->adminerHome.'adminer');
-            ob_start(static function ($html) {
-                $html = MailHelper::setAbsolutePaths($html, null, Helper::getHostUrl(). '/admin/CORSAdminerBundle/adminer');
-                $html = str_replace('static/editing.js', Helper::getHostUrl().'/admin/CORSAdminerBundle/adminer/static/editing.js', $html);
-                return $html;
+            ob_start(static function (string $html) {
+                try {
+                    if (method_exists(MailHelper::class, 'setAbsolutePaths')) {
+                        /** @psalm-suppress InternalMethod, InternalClass */
+                        $html = MailHelper::setAbsolutePaths($html, null, Helper::getHostUrl().'/admin/CORSAdminerBundle/adminer');
+                    } else {
+                        throw new \Exception('Method setAbsolutePaths does not exist in MailHelper.');
+                    }
+
+                    return str_replace('static/editing.js', Helper::getHostUrl().'/admin/CORSAdminerBundle/adminer/static/editing.js', $html);
+                } catch (\Exception $e) {
+                    throw new \Exception('Error in MailHelper::setAbsolutePaths: '.$e->getMessage().' in '.$e->getFile().' on line '.$e->getLine());
+                }
             });
-            include($this->adminerHome.'adminer/index.php');
+
+            /** @psalm-suppress UnresolvableInclude */
+            include $this->adminerHome.'adminer/index.php';
 
             @ob_get_flush();
 
@@ -56,13 +50,10 @@ namespace CORS\Bundle\AdminerBundle\Controller {
         /**
          * @Route("/admin/CORSAdminerBundle/adminer/static/{path}", requirements={"path"=".*"})
          * @Route("/admin/CORSAdminerBundle/externals/{path}", requirements={"path"=".*"}, defaults={"type": "external"})
-         * @param Request $request
-         *
-         * @return Response
          */
         public function proxyAction(Request $request): Response
         {
-            $this->prepare($request);
+            $this->prepare();
 
             $response = new Response();
             $content = '';
@@ -71,11 +62,12 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             $path = $request->get('path');
 
             if (preg_match('@\.(css|js|ico|png|jpg|gif)$@', $path)) {
-                if ($request->get('type') === 'external') {
+                /** @psalm-suppress InternalMethod, InternalClass */
+                if ('external' === $request->get('type')) {
                     $path = '../'.$path;
                 }
 
-                if (strpos($path, 'static/') === 0) {
+                if (str_starts_with($path, 'static/')) {
                     $path = 'adminer/'.$path;
                 }
 
@@ -96,7 +88,6 @@ namespace CORS\Bundle\AdminerBundle\Controller {
                     if (preg_match('@default.css$@', $path)) {
                         // append custom styles, because in Adminer everything is hardcoded
                         $content .= file_get_contents($this->adminerHome.'designs/konya/adminer.css');
-                        $content .= file_get_contents(__DIR__.'/../Resources/public/css/adminer-modifications.css');
                     }
                 }
             }
@@ -106,61 +97,13 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             return $this->mergeAdminerHeaders($response);
         }
 
-        /**
-         * @param ControllerEvent $event
-         *
-         * @return void
-         */
         public function prepare(): void
         {
-            // PHP 7.0 compatibility of adminer (throws some warnings)
-            ini_set('display_errors', 0);
-
-            $this->checkPermission('system_settings');
-
-             //call this to keep the session 'open' so that Adminer can write to it
-            if(method_exists(Session::class, 'get')) {
-                if(method_exists(Session::class, 'get')) {
-                    $session = Session::get();
-                }
-            }
-
+            /** @psalm-suppress UndefinedConstant */
             $this->adminerHome = PIMCORE_COMPOSER_PATH.'/vrana/adminer/';
         }
 
-        /**
-         * Check user permission
-         *
-         * @param string $permission
-         *
-         * @throws AccessDeniedHttpException
-         */
-        protected function checkPermission($permission)
-        {
-            $user = Admin::getCurrentUser();
-
-            if (!$user || !$user->isAllowed($permission)) {
-                Logger::error(
-                    'User {user} attempted to access {permission}, but has no permission to do so',
-                    [
-                        'user' => $user ? $user->getName() : null,
-                        'permission' => 'system_settings',
-                    ]
-                );
-
-                throw new AccessDeniedHttpException('Access denied. User has no permission to access "'.$permission.'".');
-            }
-        }
-
-        /**
-         * Merges http-headers set from Adminer via headers function
-         * to the Symfony Response Object
-         *
-         * @param Response $response
-         *
-         * @return Response
-         */
-        protected function mergeAdminerHeaders(Response $response)
+        protected function mergeAdminerHeaders(Response $response): Response
         {
             if (!headers_sent()) {
                 $headersRaw = headers_list();
@@ -188,88 +131,72 @@ namespace {
     use Pimcore\Tool\Session;
 
     if (!function_exists('adminer_object')) {
-        // adminer plugin
-        /**
-         * @return AdminerPimcore
-         */
         function adminer_object()
         {
+            /** @psalm-suppress UndefinedConstant */
             $pluginDir = PIMCORE_COMPOSER_PATH.'/vrana/adminer/plugins';
 
-            // required to run any plugin
+            /** @psalm-suppress UnresolvableInclude */
             include_once $pluginDir.'/plugin.php';
 
-            // autoloader
             foreach (glob($pluginDir.'/*.php') as $filename) {
+                /** @psalm-suppress UnresolvableInclude */
                 include_once $filename;
             }
 
             $plugins = [
                 new \CORS\Bundle\AdminerBundle\lib\Pim\AdminerPlugins(),
                 new \AdminerFrames(),
-                new \AdminerDumpDate,
-                new \AdminerDumpJson,
-                new \AdminerDumpBz2,
-                new \AdminerDumpZip,
-                new \AdminerDumpXml,
-                new \AdminerDumpAlter
+                new \AdminerDumpDate(),
+                new \AdminerDumpJson(),
+                new \AdminerDumpBz2(),
+                new \AdminerDumpZip(),
+                new \AdminerDumpXml(),
+                new \AdminerDumpAlter(),
             ];
 
             // support for SSL (at least for PDO)
+            /** @psalm-suppress InternalMethod, InternalClass */
             $driverOptions = \Pimcore\Db::get()->getParams()['driverOptions'] ?? [];
             $ssl = [
                 'key' => $driverOptions[\PDO::MYSQL_ATTR_SSL_KEY] ?? null,
                 'cert' => $driverOptions[\PDO::MYSQL_ATTR_SSL_CERT] ?? null,
                 'ca' => $driverOptions[\PDO::MYSQL_ATTR_SSL_CA] ?? null,
             ];
-            if ($ssl['key'] !== null || $ssl['cert'] !== null || $ssl['ca'] !== null) {
+            if (null !== $ssl['key'] || null !== $ssl['cert'] || null !== $ssl['ca']) {
                 $plugins[] = new \AdminerLoginSsl($ssl);
             }
 
             class AdminerPimcore extends \AdminerPlugin
             {
-                /**
-                 * @return string
-                 */
-                public function name()
+                public function name(): string
                 {
                     return '';
                 }
 
-                public function loginForm()
+                public function loginForm(): void
                 {
                     parent::loginForm();
                     echo '<script'.nonce().">document.querySelector('input[name=auth\\\\[db\\\\]]').value='".$this->database()."'; document.querySelector('form').submit()</script>";
                 }
 
-                /**
-                 * @param bool $create
-                 *
-                 * @return string
-                 */
-                public function permanentLogin($create = false)
+                public function permanentLogin($create = false): string
                 {
-                    if(method_exists(Session::class, 'getSessionId')) {
+                    if (method_exists(Session::class, 'getSessionId')) {
                         return Session::getSessionId();
                     }
+
+                    return '';
                 }
 
-                /**
-                 * @param string $login
-                 * @param string $password
-                 *
-                 * @return bool
-                 */
-                public function login($login, $password)
+                public function login($login, $password): bool
                 {
                     return true;
                 }
 
-                /**
-                 * @return array
-                 */
-                public function credentials()
+                public function credentials(): array
                 {
+                    /** @psalm-suppress InternalMethod, InternalClass */
                     $params = \Pimcore\Db::get()->getParams();
 
                     $host = $params['host'] ?? null;
@@ -278,19 +205,14 @@ namespace {
                     }
 
                     // server, username and password for connecting to database
-                    $result = [
+                    return [
                         $host,
                         $params['user'] ?? null,
                         $params['password'] ?? null,
                     ];
-
-                    return $result;
                 }
 
-                /**
-                 * @return string
-                 */
-                public function database()
+                public function database(): string
                 {
                     $db = \Pimcore\Db::get();
                     // database name, will be escaped by Adminer

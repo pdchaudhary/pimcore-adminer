@@ -27,8 +27,8 @@ final class AdminJsListener implements EventSubscriberInterface
 
     public function getAdminCss(PathsEvent $event): void
     {
-        $event->setPaths(array_merge($event->getPaths(), [
-            '/bundles/corsadminer/pimcore/css/adminer.css',
-        ]));
+//        $event->setPaths(array_merge($event->getPaths(), [
+//            '/bundles/corsadminer/pimcore/css/adminer-modifications.css',
+//        ]));
     }
 }
