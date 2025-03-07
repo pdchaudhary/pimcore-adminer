@@ -1,0 +1,66 @@
+{
+    "name": "cors/adminer",
+    "type": "pimcore-bundle",
+    "description": "CORS - Adminer",
+    "keywords": [
+        "cors",
+        "pimcore"
+    ],
+    "homepage": "http://www.cors.gmbh",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "CORS GmbH",
+            "email": "office@cors.gmbh",
+            "homepage": "https://www.cors.gmbh/",
+            "role": "TEAM"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "pimcore/admin-ui-classic-bundle": "^1.1",
+        "pimcore/pimcore": "^11.0",
+        "doctrine/orm": "^2.7",
+        "symfony/dotenv": "^6.3",
+        "symfony/form": "^6.3",
+        "symfony/webpack-encore-bundle": "^1.7",
+        "symfony/ux-twig-component": "^2.13",
+        "nelmio/cors-bundle": "^2.4",
+        "doctrine/annotations": "^2.0",
+        "vrana/adminer": "^4.17",
+        "phpmyadmin/sql-parser": "^5.11"
+    },
+    "require-dev": {
+        "symplify/easy-coding-standard": "^9.4",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-symfony": "^1.3.2",
+        "vimeo/psalm": "^4.10",
+        "weirdan/doctrine-psalm-plugin": "^2.9"
+
+    },
+    "conflict": {
+      "twig/twig": "^3.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "CORS\\Bundle\\AdminerBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": [
+            "Kernel.php"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-11": "11.0-dev"
+        },
+        "pimcore": {
+            "bundles": [
+                "CORS\\Bundle\\AdminerBundle\\CORSAdminerBundle"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

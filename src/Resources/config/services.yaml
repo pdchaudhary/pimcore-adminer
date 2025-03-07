@@ -1,0 +1,17 @@
+services:
+    CORS\Bundle\AdminerBundle\Installer:
+        public: true
+        arguments:
+            $bundle: "@=service('kernel').getBundle('CORSAdminerBundle')"
+
+
+    CORS\Bundle\AdminerBundle\Controller\DefaultController:
+        autowire: true
+        autoconfigure: true
+        public: true
+        tags:
+            - { name: controller.service_arguments }
+
+    CORS\Bundle\AdminerBundle\EventListener\AdminJsListener:
+        tags:
+            - { name: kernel.event_subscriber }

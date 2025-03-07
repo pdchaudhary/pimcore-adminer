@@ -1,0 +1,3 @@
+adminer:
+    resource: "@CORSAdminerBundle/Controller"
+    type: annotation

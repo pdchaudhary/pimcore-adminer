@@ -1,0 +1,9 @@
+doctrine:
+    orm:
+        auto_generate_proxy_classes: '%kernel.debug%'
+        entity_managers:
+            default:
+                auto_mapping: true
+
+webpack_encore:
+    output_path: '%kernel.project_dir%/public/adminer'
