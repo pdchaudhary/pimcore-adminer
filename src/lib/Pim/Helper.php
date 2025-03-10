@@ -5,9 +5,8 @@ declare(strict_types=1);
 /*
  * CORS GmbH
  *
- * This source file is available under two different licenses:
- *  - GNU General Public License version 3 (GPLv3)
- *  - CORS Commercial License (CCL)
+ * This source file is available under the GNU General Public License version 3 (GPLv3) license
+ *
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
