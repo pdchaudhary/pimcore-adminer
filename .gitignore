@@ -46,3 +46,4 @@ public/bundles
 config/local
 vendor/
 src/Resources/app/node_modules/
+composer.lock
