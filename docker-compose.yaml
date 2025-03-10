@@ -39,7 +39,7 @@ services:
       - php-debug
 
   php:
-    image: ghcr.io/cors-gmbh/pimcore-docker/php-fpm:8.2-alpine3.21-7.0-LATEST
+    image: ghcr.io/cors-gmbh/pimcore-docker/php-fpm:8.3-alpine3.21-7.0-LATEST
     container_name: php-cors-adminer
     command: 'php-fpm'
     entrypoint: docker-php-entrypoint
@@ -54,7 +54,7 @@ services:
       - COMPOSER_AUTH=${COMPOSER_AUTH}
 
   php-debug:
-    image: ghcr.io/cors-gmbh/pimcore-docker/php-fpm-debug:8.2-alpine3.21-7.0-LATEST
+    image: ghcr.io/cors-gmbh/pimcore-docker/php-fpm-debug:8.3-alpine3.21-7.0-LATEST
     command: 'php-fpm'
     entrypoint: xdebug-entrypoint
     container_name: php-debug-cors-adminer

@@ -1,5 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * CORS GmbH
+ *
+ * This source file is available under two different licenses:
+ *  - GNU General Public License version 3 (GPLv3)
+ *  - CORS Commercial License (CCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+ * @license    https://www.cors.gmbh/license     GPLv3 and CCL
+ *
+ */
+
 namespace CORS\Bundle\AdminerBundle\lib\Pim;
 
 class AdminerPlugins
@@ -8,9 +24,9 @@ class AdminerPlugins
     {
         echo script('verifyVersion = function () {};');
         /** @see https://github.com/stano/adminer-floatThead */
-        echo '<script'.nonce().' src="'.h('https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js').'"></script>';
-        echo '<script'.nonce().' src="'.h('https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.0.3/jquery.floatThead.min.js').'"></script>';
-        echo '<script'.nonce().'>$(document).ready(function() { $(\'#content table\').first().floatThead(); });</script>';
+        echo '<script' . nonce() . ' src="' . h('https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js') . '"></script>';
+        echo '<script' . nonce() . ' src="' . h('https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.0.3/jquery.floatThead.min.js') . '"></script>';
+        echo '<script' . nonce() . '>$(document).ready(function() { $(\'#content table\').first().floatThead(); });</script>';
         echo '<style type="text/css">.floatThead-container { overflow: visible !important; }</style>';
 
         /** @see https://gist.github.com/scr4bble/9ee4a9f1405ffc1465f59e03768e2768 */
@@ -203,7 +219,7 @@ EOT;
     domReady(() => {
         const suggests = JSON.parse('
 EOT
-    .json_encode($suggests).<<<EOT
+    . json_encode($suggests) . <<<EOT
 ');
         const form = document.getElementById('form')
         const sqlarea = document.getElementsByClassName('sqlarea')[0]
@@ -213,14 +229,14 @@ EOT
 
         suggests_mysql += "<dt>
 EOT
-    .lang('Tables').<<<EOT
+    . lang('Tables') . <<<EOT
         </dt>"
         for (var k in suggests['___tables___']) {
             suggests_mysql += "<dd><a href='#' data-table='1'>" + suggests['___tables___'][k] + "</a></dd>"
         }
         suggests_mysql += "<dt>
 EOT
-    .lang('SQL command').<<<EOT
+    . lang('SQL command') . <<<EOT
 </dt>"
         for (var k in suggests['___mysql___']) {
             suggests_mysql += "<dd><a href='#' data-nobt='1'>" + suggests['___mysql___'][k] + "</a></dd>"
@@ -231,7 +247,7 @@ EOT
             '<div id="suggest_tablefields_container" style="height:' + sqlarea.offsetHeight + 'px;top:0;left:' + posLeft + 'px">' +
             '<input autocomplete="off" id="suggest_search" type="text" placeholder="
 EOT
-    .lang('Search').<<<EOT
+    . lang('Search') . <<<EOT
 ..."/><dl id="suggest_tablefields" class="noselect"></dl></div>')
         compile(suggests_mysql)
 
@@ -371,7 +387,7 @@ EOT
         </script>
         <p class="jsonly"><input id="filter-field" autocomplete="off" placeholder="
 EOT
-            .lang('Search').<<<EOT
+            . lang('Search') . <<<EOT
 ">
 EOT
         );

@@ -1,5 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * CORS GmbH
+ *
+ * This source file is available under two different licenses:
+ *  - GNU General Public License version 3 (GPLv3)
+ *  - CORS Commercial License (CCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+ * @license    https://www.cors.gmbh/license     GPLv3 and CCL
+ *
+ */
+
 namespace CORS\Bundle\AdminerBundle\lib\Pim;
 
 use Pimcore;
@@ -39,8 +55,8 @@ class Helper
             $hostUrl = self::getHostUrl();
             if ($hostUrl) {
                 $context = \Pimcore::getContainer()->get('router')->getContext();
-                $context->setHost(parse_url($hostUrl, PHP_URL_HOST));
-                $context->setScheme(parse_url($hostUrl, PHP_URL_SCHEME));
+                $context->setHost(parse_url($hostUrl, \PHP_URL_HOST));
+                $context->setScheme(parse_url($hostUrl, \PHP_URL_SCHEME));
             }
         }
 
@@ -106,21 +122,21 @@ class Helper
 
             $port = '';
             if (!in_array(self::getRequest()->getPort(), [443, 80])) {
-                $port = ':'.self::getRequest()->getPort();
+                $port = ':' . self::getRequest()->getPort();
             }
 
             $hostname = self::getRequest()->getHost();
             if ($hostname && 'localhost' !== $hostname) {
-                self::$hostUrl = $protocol.'://'.$hostname.$port;
+                self::$hostUrl = $protocol . '://' . $hostname . $port;
                 self::saveInCache('PIMCORE_HOSTURL', self::$hostUrl);
             } else {
                 self::$hostUrl = self::getFromCache('PIMCORE_HOSTURL');
 
                 if (!self::$hostUrl) {
-                    $systemConfig = Helper::getPimcoreSystemConfiguration('general');
+                    $systemConfig = self::getPimcoreSystemConfiguration('general');
                     if (!empty($systemConfig['domain'])) {
                         $hostname = $systemConfig['domain'];
-                        self::$hostUrl = $protocol.'://'.$hostname.$port;
+                        self::$hostUrl = $protocol . '://' . $hostname . $port;
                     }
                 }
             }

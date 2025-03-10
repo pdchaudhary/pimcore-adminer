@@ -1,32 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
-/**
- * CORS
+/*
+ * CoreShop
  *
  * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ *  - GNU General Public License version 3 (GPLv3)
+ *  - CoreShop Commercial License (CCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
- * @license    https://www.cors.gmbh/license     GPLv3 and PCL
+ * @copyright  Copyright (c) CoreShop GmbH (https://www.coreshop.com)
+ * @license    https://www.coreshop.com/license     GPLv3 and CCL
+ *
  */
 
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symplify\EasyCodingStandard\ValueObject\Set\SetList;
-use PhpCsFixer\Fixer\Phpdoc\PhpdocToCommentFixer;
+declare(strict_types=1);
 
+return static function (\Symplify\EasyCodingStandard\Config\ECSConfig $ecsConfig): void {
+    $ecsConfig->import('vendor/coreshop/test-setup/ecs.php');
+    $ecsConfig->parallel();
+    $ecsConfig->paths(['src']);
 
-return static function (ContainerConfigurator $containerConfigurator): void {
-    $parameters = $containerConfigurator->parameters();
-    $parameters->set('skip', [
-        // Add the fixers you want to skip here
-        PhpdocToCommentFixer::class => null,
-    ]);
-    
-    $containerConfigurator->import(SetList::SYMFONY);
+    $header = <<<EOT
+CORS GmbH
 
+This source file is available under two different licenses:
+ - GNU General Public License version 3 (GPLv3)
+ - CORS Commercial License (CCL)
+Full copyright and license information is available in
+LICENSE.md which is distributed with this source code.
+
+@copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+@license    https://www.cors.gmbh/license     GPLv3 and CCL
+ 
+EOT;
+
+    $ecsConfig->ruleWithConfiguration(\PhpCsFixer\Fixer\Comment\HeaderCommentFixer::class, ['header' => $header]);
 };

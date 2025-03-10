@@ -1,5 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * CORS GmbH
+ *
+ * This source file is available under two different licenses:
+ *  - GNU General Public License version 3 (GPLv3)
+ *  - CORS Commercial License (CCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+ * @license    https://www.cors.gmbh/license     GPLv3 and CCL
+ *
+ */
+
 namespace CORS\Bundle\AdminerBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
@@ -15,12 +31,12 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 class CORSAdminerExtension extends Extension
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configs = $this->processConfiguration($this->getConfiguration([], $container), $configs);
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
 
         $loader->load('services.yaml');
     }

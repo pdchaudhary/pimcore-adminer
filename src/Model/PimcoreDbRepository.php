@@ -1,5 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * CORS GmbH
+ *
+ * This source file is available under two different licenses:
+ *  - GNU General Public License version 3 (GPLv3)
+ *  - CORS Commercial License (CCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+ * @license    https://www.cors.gmbh/license     GPLv3 and CCL
+ *
+ */
+
 namespace CORS\Bundle\AdminerBundle\Model;
 
 use Doctrine\DBAL\Connection;
@@ -30,8 +46,9 @@ class PimcoreDbRepository implements Repository
     /** @var array for tracking executed SQL queries, uncomment all occurences of self::$debug, too */
     //private static $debug = [];
 
-    public function __construct(Connection $connection = null)
-    {
+    public function __construct(
+        Connection $connection = null,
+    ) {
         $this->connection = $connection ?? Db::get();
         $this->connection->setTransactionIsolation(TransactionIsolationLevel::READ_UNCOMMITTED);
 
@@ -46,11 +63,11 @@ class PimcoreDbRepository implements Repository
      */
     public static function getInstance(Connection $connection = null)
     {
-        if (!isset(self::$instances[get_called_class()])) {
-            self::$instances[get_called_class()] = new static($connection);
+        if (!isset(self::$instances[static::class])) {
+            self::$instances[static::class] = new static($connection);
         }
 
-        return self::$instances[get_called_class()];
+        return self::$instances[static::class];
     }
 
     public function getTableName()
@@ -164,6 +181,7 @@ class PimcoreDbRepository implements Repository
             foreach ($where as $value) {
                 if (is_array($value) || null === $value) {
                     $cache = false;
+
                     break;
                 }
             }
@@ -255,7 +273,7 @@ class PimcoreDbRepository implements Repository
         if (null !== $groupBy) {
             $queryBuilder->groupBy($groupBy);
 
-            return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ('.$queryBuilder->getSQL().') t');
+            return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM (' . $queryBuilder->getSQL() . ') t');
         }
 
         return (int) $this->connection->fetchOne($queryBuilder->getSQL());
@@ -263,15 +281,15 @@ class PimcoreDbRepository implements Repository
 
     public function create(array $data)
     {
-        $parametersHash = md5($this->getTableName().'-'.implode('-', array_keys($data)));
+        $parametersHash = md5($this->getTableName() . '-' . implode('-', array_keys($data)));
         if (!isset(self::$preparedStatements[$parametersHash])) {
-            $sql = 'INSERT INTO '.$this->getTableName().' ('.implode(', ', array_map([$this->connection, 'quoteIdentifier'], array_keys($data))).') VALUES ('.rtrim(str_repeat('?,', count($data)), ',').')';
+            $sql = 'INSERT INTO ' . $this->getTableName() . ' (' . implode(', ', array_map([$this->connection, 'quoteIdentifier'], array_keys($data))) . ') VALUES (' . rtrim(str_repeat('?,', count($data)), ',') . ')';
             self::$preparedStatements[$parametersHash] = self::prepare($sql);
-            self::$preparedStatements[$parametersHash.'-types'] = $this->getDataTypes($data);
+            self::$preparedStatements[$parametersHash . '-types'] = $this->getDataTypes($data);
         }
 
         foreach (array_values($data) as $key => $dataItem) {
-            self::$preparedStatements[$parametersHash]->bindValue($key + 1, $dataItem, self::$preparedStatements[$parametersHash.'-types'][$key]);
+            self::$preparedStatements[$parametersHash]->bindValue($key + 1, $dataItem, self::$preparedStatements[$parametersHash . '-types'][$key]);
         }
 
         $result = self::$preparedStatements[$parametersHash]->execute();
@@ -296,11 +314,11 @@ class PimcoreDbRepository implements Repository
             $where = ['id' => $where];
         }
 
-        $query = 'UPDATE '.$this->getTableName().' SET '.implode(',', array_map(function ($field) {
-            return $this->connection->quoteIdentifier($field).'=?';
-        }, array_keys($data))).'
-            WHERE '.implode(' AND ', array_map(function ($field) {
-            return $this->connection->quoteIdentifier($field).'=?';
+        $query = 'UPDATE ' . $this->getTableName() . ' SET ' . implode(',', array_map(function ($field) {
+            return $this->connection->quoteIdentifier($field) . '=?';
+        }, array_keys($data))) . '
+            WHERE ' . implode(' AND ', array_map(function ($field) {
+            return $this->connection->quoteIdentifier($field) . '=?';
         }, array_keys($where)));
 
         return $this->execute($query, array_merge(array_values($data), array_values($where)));
@@ -330,7 +348,7 @@ class PimcoreDbRepository implements Repository
                 continue;
             }
 
-            $query = 'INSERT INTO '.$table.' ('.implode(',', array_map([$this->connection, 'quoteIdentifier'], $columnList)).') VALUES ';
+            $query = 'INSERT INTO ' . $table . ' (' . implode(',', array_map([$this->connection, 'quoteIdentifier'], $columnList)) . ') VALUES ';
 
             $paramValues = [];
             foreach ($batch as $dataset) {
@@ -340,10 +358,10 @@ class PimcoreDbRepository implements Repository
             }
 
             $updateList = array_map(function ($column) {
-                return $this->connection->quoteIdentifier($column).'=VALUES('.$this->connection->quoteIdentifier($column).')';
+                return $this->connection->quoteIdentifier($column) . '=VALUES(' . $this->connection->quoteIdentifier($column) . ')';
             }, $columnList);
 
-            $query .= rtrim(str_repeat('('.rtrim(\str_repeat('?,', $countColumnList), ',').'),', count($batch)), ',').' ON DUPLICATE KEY UPDATE '.implode(',', $updateList);
+            $query .= rtrim(str_repeat('(' . rtrim(\str_repeat('?,', $countColumnList), ',') . '),', count($batch)), ',') . ' ON DUPLICATE KEY UPDATE ' . implode(',', $updateList);
 
             $this->execute($query, $paramValues);
         }
@@ -415,7 +433,7 @@ class PimcoreDbRepository implements Repository
     public function getDataTypes(array $data): array
     {
         return array_values(
-            array_map([$this, 'getDataType'], $data)
+            array_map([$this, 'getDataType'], $data),
         );
     }
 
@@ -438,6 +456,7 @@ class PimcoreDbRepository implements Repository
             foreach ($item as $arrayItem) {
                 if (!is_int($arrayItem)) {
                     $isIntArray = false;
+
                     break;
                 }
             }
@@ -470,6 +489,7 @@ class PimcoreDbRepository implements Repository
             try {
                 self::getInstance()->beginTransaction();
                 $result = $function();
+
                 try {
                     self::getInstance()->commit();
                 } catch (\Throwable $e) {
@@ -512,7 +532,7 @@ class PimcoreDbRepository implements Repository
 
         $set = [];
         foreach ($cols as $col) {
-            $set[] = $col.' = ?';
+            $set[] = $col . ' = ?';
         }
 
         $sql = sprintf(
@@ -520,7 +540,7 @@ class PimcoreDbRepository implements Repository
             $this->connection->quoteIdentifier($table),
             implode(', ', $cols),
             rtrim(str_repeat('?,', count($cols)), ','),
-            implode(', ', $set)
+            implode(', ', $set),
         );
 
         $bind = array_merge($bind, $bind);
