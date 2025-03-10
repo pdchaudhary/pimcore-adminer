@@ -20,7 +20,6 @@ use Pimcore\Kernel as PimcoreKernel;
 use Pimcore\Bundle\AdminBundle\PimcoreAdminBundle;
 use CORS\Bundle\AdminerBundle\CORSAdminerBundle;
 use Symfony\WebpackEncoreBundle\WebpackEncoreBundle;
-use Nelmio\CorsBundle\NelmioCorsBundle;
 
 class Kernel extends PimcoreKernel
 {
@@ -29,7 +28,6 @@ class Kernel extends PimcoreKernel
         $collection->addBundle(new CORSAdminerBundle());
         $collection->addBundle(new PimcoreAdminBundle(), 60);
         $collection->addBundle(new WebpackEncoreBundle());
-        $collection->addBundle(new NelmioCorsBundle());
 
     }
 }
