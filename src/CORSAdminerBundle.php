@@ -29,6 +29,6 @@ class CORSAdminerBundle extends AbstractPimcoreBundle
 
     public function getInstaller(): ?Installer
     {
-        return $this->container->get(Installer::class);
+        return $this->container?->get(Installer::class);
     }
 }
