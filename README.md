@@ -1,5 +1,20 @@
-# Adminer Bundle
-## Install Demo
-- `docker-up`
-- `composer install`
-- `./vendor/bin/pimcore-install --mysql-host-socket=cors-adminer`
+CORS Adminer Bundle
+--------
+
+We love Adminer! And we had to bring it back. This bundle brings back Adminer into Pimcore 11.
+
+Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the original implementation for Pimcore 11. We separeted this from the amazing DataDirector Bundle into a standalone bundle.
+
+# Installation
+
+```bash
+composer require cors/adminer
+
+bin/console pimcore:bundle:enable CORSAdminerBundle
+bin/console pimcore:bundle:install CORSAdminerBundle
+```
+
+# Configuration
+
+- Open Pimcore
+- Open Tools -> System Info & Tools -> Database Administration 
