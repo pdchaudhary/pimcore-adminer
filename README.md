@@ -9,8 +9,13 @@ Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the o
 
 ```bash
 composer require cors/adminer
+````
 
-bin/console pimcore:bundle:enable CORSAdminerBundle
+Register bundle in config/bundles.php
+
+CORS\AdminerBundle\CORSAdminerBundle::class => ['all' => true],
+
+```
 bin/console pimcore:bundle:install CORSAdminerBundle
 ```
 
