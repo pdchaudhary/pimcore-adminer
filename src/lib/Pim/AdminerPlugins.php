@@ -1,6 +1,7 @@
 <?php
 
 namespace CORS\Bundle\AdminerBundle\lib\Pim;
+
 class AdminerPlugins
 {
     public function head()
@@ -12,10 +13,9 @@ class AdminerPlugins
         echo '<script'.nonce().'>$(document).ready(function() { $(\'#content table\').first().floatThead(); });</script>';
         echo '<style type="text/css">.floatThead-container { overflow: visible !important; }</style>';
 
-
-
         /** @see https://gist.github.com/scr4bble/9ee4a9f1405ffc1465f59e03768e2768 */
-        echo script(<<<EOT
+        echo script(
+            <<<EOT
 document.addEventListener('DOMContentLoaded', function(event) {
 	var date = new Date();
 	var tds = document.querySelectorAll('td[id^="val"]');
@@ -40,10 +40,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
 EOT
         );
 
-
-
         /** @see https://gist.github.com/NoxArt/8085521 */
-        echo script(<<<EOT
+        echo script(
+            <<<EOT
 		(function(){
 			var executed = false;
 			var saveAndRestore = function() {
@@ -70,12 +69,11 @@ EOT
 EOT
         );
 
+        if (!isset($_GET['sql'])) {
+            return;
+        }
 
-if (!isset($_GET['sql'])) {
-    return;
-}
-
-$suggests = [
+        $suggests = [
     '___mysql___' => [
         'DELETE FROM',
         'DISTINCT',
@@ -94,17 +92,17 @@ $suggests = [
         'SELECT',
         'UPDATE',
         'WHERE',
-    ]
+    ],
 ];
 
-foreach (array_keys(tables_list()) as $table) {
-    $suggests['___tables___'][] = $table;
-    foreach (fields($table) as $field => $foo) {
-        $suggests[$table][] = $field;
-    }
-}
+        foreach (array_keys(tables_list()) as $table) {
+            $suggests['___tables___'][] = $table;
+            foreach (fields($table) as $field => $foo) {
+                $suggests[$table][] = $field;
+            }
+        }
 
-echo <<<EOT
+        echo <<<EOT
 <style>
     #suggest_tablefields_container {
         min-width: 200px;
@@ -152,7 +150,8 @@ echo <<<EOT
 </style>
 EOT;
 
-echo script(<<<EOT
+        echo script(
+            <<<EOT
     function domReady (fn) {
         document.addEventListener("DOMContentLoaded", fn)
         if (document.readyState === "interactive" || document.readyState === "complete") {
@@ -307,13 +306,13 @@ EOT
         }, false)
     })
 EOT
-);
-
+        );
     }
 
-    function tablesPrint($tables)
+    public function tablesPrint($tables)
     {
-        echo script(<<<EOT
+        echo script(
+            <<<EOT
             var tablesFilterTimeout = null;
             var tablesFilterValue = '';
 

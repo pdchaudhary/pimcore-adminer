@@ -1,22 +1,12 @@
 <?php
-/**
- * Copyright Blackbit digital Commerce GmbH <info@blackbit.de>
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
 
 namespace CORS\Bundle\AdminerBundle\Model;
 
-use CORS\Bundle\AdminerBundle\Model\Repository;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
@@ -24,9 +14,7 @@ use Doctrine\DBAL\TransactionIsolationLevel;
 use Exception;
 use PDOException;
 use Pimcore\Db;
-use Doctrine\DBAL\Connection;
 use Pimcore\Logger;
-use Throwable;
 
 class PimcoreDbRepository implements Repository
 {
@@ -54,18 +42,19 @@ class PimcoreDbRepository implements Repository
     }
 
     /**
-     * @param Connection|null $connection
      * @return static
      */
-    public static function getInstance(Connection $connection = null) {
-        if(!isset(self::$instances[get_called_class()])) {
+    public static function getInstance(Connection $connection = null)
+    {
+        if (!isset(self::$instances[get_called_class()])) {
             self::$instances[get_called_class()] = new static($connection);
         }
 
         return self::$instances[get_called_class()];
     }
 
-    public function getTableName() {
+    public function getTableName()
+    {
         throw new Exception('Please implement getTableName() in a model class');
     }
 
@@ -75,9 +64,10 @@ class PimcoreDbRepository implements Repository
         $dataTypes = $this->getDataTypes($parameters);
 
         if (in_array(Connection::PARAM_STR_ARRAY, $dataTypes, true) || in_array(Connection::PARAM_INT_ARRAY, $dataTypes, true)) {
-            if(class_exists(\Doctrine\DBAL\SQLParserUtils::class)) {
+            if (class_exists(\Doctrine\DBAL\SQLParserUtils::class)) {
                 [$sql, $parameters, $dataTypes] = \Doctrine\DBAL\SQLParserUtils::expandListParameters($sql, $parameters, $dataTypes);
             }
+
             return $this->connection->executeQuery($sql, $parameters, $dataTypes);
         }
 
@@ -85,7 +75,7 @@ class PimcoreDbRepository implements Repository
             self::$preparedStatements[$sql] = self::prepare($sql);
         }
 
-        if($sql instanceof Statement) {
+        if ($sql instanceof Statement) {
             $statement = $sql;
         } else {
             //self::$debug[$sql] = (self::$debug[$sql] ?? 0) + 1;
@@ -102,18 +92,20 @@ class PimcoreDbRepository implements Repository
     public function execute($sql, $parameters = [])
     {
         $result = $this->executeSql($sql, $parameters);
-        if($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
+        if ($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
             return $result->rowCount();
         }
+
         return self::$preparedStatements[$sql]->rowCount();
     }
 
     public function findOneInSql($sql, $parameters = [])
     {
         $result = $this->findRowInSql($sql, $parameters);
-        if($result === null) {
+        if (null === $result) {
             return false;
         }
+
         return reset($result);
     }
 
@@ -121,16 +113,18 @@ class PimcoreDbRepository implements Repository
     {
         $result = $this->findInSql($sql, $parameters);
         $result = reset($result);
-        if($result === false) {
+        if (false === $result) {
             return null;
         }
+
         return $result;
     }
 
     public function findColumnInSql($sql, $parameters = [])
     {
         $result = $this->findInSql($sql, $parameters);
-        return array_map(static function($row) {
+
+        return array_map(static function ($row) {
             return reset($row);
         }, $result);
     }
@@ -142,6 +136,7 @@ class PimcoreDbRepository implements Repository
         if ($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
             return $result->fetchAll(FetchMode::ASSOCIATIVE);
         }
+
         return self::$preparedStatements[$sql]->fetchAll(FetchMode::ASSOCIATIVE);
     }
 
@@ -154,8 +149,9 @@ class PimcoreDbRepository implements Repository
                 if ($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
                     return $result->fetchAll(FetchMode::ASSOCIATIVE);
                 }
+
                 return self::$preparedStatements[$parametersHash]->fetchAll(FetchMode::ASSOCIATIVE);
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 unset(self::$preparedStatements[$parametersHash]);
             }
         }
@@ -166,7 +162,7 @@ class PimcoreDbRepository implements Repository
         $queryBuilder = $queryBuilder->select(implode(',', $columns))->from($table);
         if (!empty($where)) {
             foreach ($where as $value) {
-                if (is_array($value) || $value === null) {
+                if (is_array($value) || null === $value) {
                     $cache = false;
                     break;
                 }
@@ -181,7 +177,7 @@ class PimcoreDbRepository implements Repository
                         $value = array_map([$this->connection, 'quote'], $value);
                         $conditions[] = str_replace('?', implode(',', $value), $condition);
                     } else {
-                        if($value !== null) {
+                        if (null !== $value) {
                             $value = $this->connection->quote($value);
                         } else {
                             $value = '';
@@ -200,8 +196,8 @@ class PimcoreDbRepository implements Repository
         }
         $queryBuilder = $queryBuilder->setFirstResult($offset);
 
-        if($groupBy !== null) {
-            if(strtolower($groupBy) === 'distinct') {
+        if (null !== $groupBy) {
+            if ('distinct' === strtolower($groupBy)) {
                 $queryBuilder->distinct();
             } else {
                 $queryBuilder->groupBy($groupBy);
@@ -210,13 +206,14 @@ class PimcoreDbRepository implements Repository
 
         if ($cache) {
             self::$preparedStatements[$parametersHash] = self::prepare($queryBuilder->getSQL());
+
             return $this->findInTable($table, $where, $order, $count, $offset);
         }
 
         try {
             return $this->connection->fetchAllAssociative($queryBuilder->getSQL());
-        } catch(\Throwable $e) {
-            if(method_exists($this->connection, 'fetchAll')) {
+        } catch (\Throwable $e) {
+            if (method_exists($this->connection, 'fetchAll')) {
                 return $this->connection->fetchAll($queryBuilder->getSQL());
             }
         }
@@ -234,17 +231,19 @@ class PimcoreDbRepository implements Repository
         return $result[0] ?? [];
     }
 
-    public function findOne(array $where = [], string $order = null, int $offset = 0): array {
+    public function findOne(array $where = [], string $order = null, int $offset = 0): array
+    {
         return $this->findOneInTable($this->getTableName(), $where, $order, $offset);
     }
 
-    public function countRows(array $where = [], $groupBy = null) {
+    public function countRows(array $where = [], $groupBy = null)
+    {
         $queryBuilder = new QueryBuilder($this->connection);
-        $queryBuilder = $queryBuilder->select(($groupBy === null) ? 'COUNT(*)' : '1')->from($this->getTableName());
-        if(!empty($where)) {
+        $queryBuilder = $queryBuilder->select((null === $groupBy) ? 'COUNT(*)' : '1')->from($this->getTableName());
+        if (!empty($where)) {
             $conditions = [];
-            foreach($where as $condition => $value) {
-                if(is_array($value)) {
+            foreach ($where as $condition => $value) {
+                if (is_array($value)) {
                     $conditions[] = str_replace('?', implode(',', array_map([$this->connection, 'quote'], $value)), $condition);
                 } else {
                     $conditions[] = str_replace('?', $this->connection->quote($value), $condition);
@@ -253,13 +252,13 @@ class PimcoreDbRepository implements Repository
             $queryBuilder = $queryBuilder->where(implode(' AND ', $conditions));
         }
 
-        if($groupBy !== null) {
+        if (null !== $groupBy) {
             $queryBuilder->groupBy($groupBy);
 
-            return (int)$this->connection->fetchOne('SELECT COUNT(*) FROM ('.$queryBuilder->getSQL().') t');
+            return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ('.$queryBuilder->getSQL().') t');
         }
 
-        return (int)$this->connection->fetchOne($queryBuilder->getSQL());
+        return (int) $this->connection->fetchOne($queryBuilder->getSQL());
     }
 
     public function create(array $data)
@@ -276,7 +275,7 @@ class PimcoreDbRepository implements Repository
         }
 
         $result = self::$preparedStatements[$parametersHash]->execute();
-        if($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
+        if ($result instanceof Result || $result instanceof \Doctrine\DBAL\Driver\Statement) {
             $insertedRows = $result->rowCount();
         } else {
             $insertedRows = self::$preparedStatements[$parametersHash]->rowCount();
@@ -284,6 +283,7 @@ class PimcoreDbRepository implements Repository
 
         if ($insertedRows > 0) {
             $data['id'] = $this->connection->lastInsertId();
+
             return $data;
         }
 
@@ -292,16 +292,17 @@ class PimcoreDbRepository implements Repository
 
     public function update($data, $where)
     {
-        if(!is_array($where)) {
+        if (!is_array($where)) {
             $where = ['id' => $where];
         }
 
-        $query = 'UPDATE '.$this->getTableName().' SET '.implode(',', array_map(function($field){
+        $query = 'UPDATE '.$this->getTableName().' SET '.implode(',', array_map(function ($field) {
             return $this->connection->quoteIdentifier($field).'=?';
         }, array_keys($data))).'
             WHERE '.implode(' AND ', array_map(function ($field) {
             return $this->connection->quoteIdentifier($field).'=?';
         }, array_keys($where)));
+
         return $this->execute($query, array_merge(array_values($data), array_values($where)));
     }
 
@@ -317,15 +318,15 @@ class PimcoreDbRepository implements Repository
             $batches[implode('-', array_keys($dataset))][] = $dataset;
         }
 
-        if ($table === null) {
+        if (null === $table) {
             $table = $this->getTableName();
         }
 
-        foreach($batches as $batch) {
+        foreach ($batches as $batch) {
             $columnList = array_keys($batch[0]);
 
             $countColumnList = count($columnList);
-            if ($countColumnList === 0) {
+            if (0 === $countColumnList) {
                 continue;
             }
 
@@ -362,19 +363,23 @@ class PimcoreDbRepository implements Repository
         return $this->connection->delete($this->getTableName(), $where);
     }
 
-    public function get($id): array {
-        return $this->findOne(['id = ?' => (int)$id]);
+    public function get($id): array
+    {
+        return $this->findOne(['id = ?' => (int) $id]);
     }
 
-    public function beginTransaction() {
+    public function beginTransaction()
+    {
         $this->connection->beginTransaction();
     }
 
-    public function setTransactionIsolation($level) {
+    public function setTransactionIsolation($level)
+    {
         $this->connection->setTransactionIsolation($level);
     }
 
-    public function commit() {
+    public function commit()
+    {
         $this->connection->commit();
     }
 
@@ -383,19 +388,23 @@ class PimcoreDbRepository implements Repository
         $this->connection->close();
     }
 
-    public function rollback() {
+    public function rollback()
+    {
         $this->connection->rollBack();
     }
 
-    public function isTransactionActive() {
+    public function isTransactionActive()
+    {
         return $this->connection->isTransactionActive();
     }
 
-    public function getTransactionNestingLevel() {
+    public function getTransactionNestingLevel()
+    {
         return $this->connection->getTransactionNestingLevel();
     }
 
-    public function isTransactionMarkedForRollbackOnly() {
+    public function isTransactionMarkedForRollbackOnly()
+    {
         try {
             return $this->connection->isRollbackOnly();
         } catch (ConnectionException $e) {
@@ -403,11 +412,6 @@ class PimcoreDbRepository implements Repository
         }
     }
 
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
     public function getDataTypes(array $data): array
     {
         return array_values(
@@ -415,7 +419,8 @@ class PimcoreDbRepository implements Repository
         );
     }
 
-    private function getDataType($item) {
+    private function getDataType($item)
+    {
         if (is_string($item)) {
             return \PDO::PARAM_STR;
         }
@@ -447,7 +452,8 @@ class PimcoreDbRepository implements Repository
         return \PDO::PARAM_STR;
     }
 
-    public static function prepare($sql) {
+    public static function prepare($sql)
+    {
         $parametersHash = md5($sql);
 
         if (!isset(self::$preparedStatements[$parametersHash])) {
@@ -460,7 +466,7 @@ class PimcoreDbRepository implements Repository
     public static function retry(callable $function, callable $rollbackFunction = null)
     {
         $maxRetries = 5;
-        for ($retries = 0; $retries < $maxRetries; $retries++) {
+        for ($retries = 0; $retries < $maxRetries; ++$retries) {
             try {
                 self::getInstance()->beginTransaction();
                 $result = $function();
@@ -469,6 +475,7 @@ class PimcoreDbRepository implements Repository
                 } catch (\Throwable $e) {
                     // implicit commit happened in meantime
                 }
+
                 return $result;
             } catch (\Throwable $e) {
                 try {
@@ -477,8 +484,8 @@ class PimcoreDbRepository implements Repository
                 }
 
                 // we try to start the transaction $maxRetries times again (deadlocks, ...)
-                if(($e instanceof RetryableException || (($e instanceof PDOException || $e instanceof DBALException) && $e->getCode() == 1205)) && $retries < $maxRetries - 1) {
-                    if(is_callable($rollbackFunction)) {
+                if (($e instanceof RetryableException || (($e instanceof PDOException || $e instanceof DBALException) && 1205 == $e->getCode())) && $retries < $maxRetries - 1) {
+                    if (is_callable($rollbackFunction)) {
                         $rollbackFunction();
                     }
 
@@ -521,11 +528,13 @@ class PimcoreDbRepository implements Repository
         return $this->executeSql($sql, $bind);
     }
 
-    public function lastInsertId() {
+    public function lastInsertId()
+    {
         return $this->connection->lastInsertId();
     }
 
-    public static function clearPreparedStatements() {
+    public static function clearPreparedStatements()
+    {
         self::$preparedStatements = [];
     }
 }
